@@ -1,0 +1,15 @@
+node_modules
+build
+frontend/public/webviewer/
+.DS_Store
+app/frontend
+mta_archives
+Makefile*
+.env
+dist
+tests-private
+microservices/successfactors-srv/odata-client/successfactors/
+microservices/db-deploy-srv/src/prisma/migrations/
+**/cypress/screenshots
+**/cypress/videos
+**/cypress/downloads
