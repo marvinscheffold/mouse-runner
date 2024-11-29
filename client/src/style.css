@@ -10,70 +10,12 @@ body {
   height: 100vh;
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgb(24, 28, 36);
 }
 
-#app {
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  max-height: 100%;
-  position: relative;
-  overflow: hidden;
-}
-
-#click-capture {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 100;
-}
-
-.text {
-  width: fit-content;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: clamp(20px, 5vw, 40px);
-  margin: 0;
-  text-align: center;
-  z-index: 10;
-}
-
-.triangle {
-  width: 300px;
-  height: 100px;
-  background: red linear-gradient(red, blue);
-  clip-path: polygon(0% 100%, 50% 0%, 100% 100%);
-  animation: spin 10s linear infinite;
-}
-
-@keyframes spin {
-  100% {
-    -webkit-transform: rotate(360deg);
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes move {
-  100% {
-    -webkit-transform: translateX(1000%);
-    transform: translateX(1000%);
-  }
-}
-
-.rectangle {
-  width: 200px;
-  height: 400px;
-  background-color: #f00;
-  animation: move 10s linear infinite;
-}
-
-.circle {
-  width: 200px;
-  height: 200px;
-  background-color: #f00;
-  border-radius: 100%;
+canvas {
+  background-color: rgb(235, 235, 235);
 }

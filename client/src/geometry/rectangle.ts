@@ -3,9 +3,10 @@ import { Point } from "./point.js";
 import { getAreaOfTriangle } from "./triangle.js";
 
 export class Rectangle {
-  center: Point;
   width: number;
   height: number;
+  center: Point;
+  rotation: number;
   A: Point;
   B: Point;
   C: Point;
@@ -15,32 +16,38 @@ export class Rectangle {
   c: Line;
   d: Line;
 
-  constructor(
-    center: Point,
-    width: number = 1,
-    height: number = 1,
-    rotation: number = 0
-  ) {
-    this.center = center;
+  constructor({
+    center,
+    width,
+    height,
+    rotation,
+  }: {
+    center: Point;
+    width: number;
+    height: number;
+    rotation: number;
+  }) {
     this.width = width;
     this.height = height;
-    const rotationPositive = rotation < 0 ? 360 + rotation : rotation;
-    this.A = new Point(
-      center.x - width / 2,
-      center.y - height / 2
-    ).getRotatedPoint(this.center, rotationPositive);
-    this.B = new Point(
-      center.x + width / 2,
-      center.y - height / 2
-    ).getRotatedPoint(this.center, rotationPositive);
-    this.C = new Point(
-      center.x + width / 2,
-      center.y + height / 2
-    ).getRotatedPoint(this.center, rotationPositive);
-    this.D = new Point(
-      center.x - width / 2,
-      center.y + height / 2
-    ).getRotatedPoint(this.center, rotationPositive);
+    this.center = center;
+    this.rotation = rotation < 0 ? 360 + rotation : rotation;
+
+    this.A = new Point({
+      x: center.x - width / 2,
+      y: center.y - height / 2,
+    }).getRotatedPoint(this.center, this.rotation);
+    this.B = new Point({
+      x: center.x + width / 2,
+      y: center.y - height / 2,
+    }).getRotatedPoint(this.center, this.rotation);
+    this.C = new Point({
+      x: center.x + width / 2,
+      y: center.y + height / 2,
+    }).getRotatedPoint(this.center, this.rotation);
+    this.D = new Point({
+      x: center.x - width / 2,
+      y: center.y + height / 2,
+    }).getRotatedPoint(this.center, this.rotation);
 
     this.a = new Line(this.A, this.B);
     this.b = new Line(this.B, this.C);
@@ -52,11 +59,7 @@ export class Rectangle {
     return this.width * this.height;
   }
 
-  getSides() {
-    return [this.a, this.b, this.c, this.d];
-  }
-
-  istPointOnRectangle(point: Point) {
+  isPointOnRectangle(point: Point) {
     const areaAPD = getAreaOfTriangle(this.A, point, this.D);
     const areaDPC = getAreaOfTriangle(this.D, point, this.C);
     const areaCPB = getAreaOfTriangle(this.C, point, this.B);

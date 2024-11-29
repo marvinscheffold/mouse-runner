@@ -2,7 +2,7 @@ export class Point {
   x: number;
   y: number;
 
-  constructor(x: number = 0, y: number = 0) {
+  constructor({ x, y }: { x: number; y: number }) {
     this.x = x;
     this.y = y;
   }
@@ -23,7 +23,7 @@ export class Point {
         cos * (this.y - aroundPoint.y) -
         sin * (this.x - aroundPoint.x) +
         aroundPoint.y;
-    return new Point(nx, ny);
+    return new Point({ x: nx, y: ny });
   }
 
   getDistanceToPoint(point: Point) {
