@@ -1,0 +1,11 @@
+{
+  "name": "mouse-runner",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start-frontend": "npm run dev --prefix client"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
