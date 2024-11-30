@@ -1,74 +1,120 @@
-import { Point } from "./geometry/point";
-import { Vector } from "./geometry/vector";
 import { Obstacle } from "./objects/obstacle";
-import { Player } from "./objects/player";
 import { v4 as uuidv4 } from "uuid";
+import { Player } from "./objects/player";
+import { getRandomPointOutsideScene } from "./utils/getRandomPointOutsideScene";
+import { getRandomPointInsideScene } from "./utils/getRandomPointInsideScene";
+import { getVectorFromPointAToPointB } from "./utils/getVectorBetweenTwoPoints";
+import { getRandomNumberBetween } from "./utils/getRandomNumberBetween";
+import { getRandomBoolean } from "./utils/getRandomBoolean";
+import { Score } from "./objects/score";
+import { Point } from "./geometry/point";
+import { getRandomColorFromPalett } from "./utils/getRandomColorFromPalette";
 
 export class Scene {
   width: number;
   height: number;
-  players: Player[];
-  obstacles: Obstacle[];
-  level: number;
+  difficulty: number = 1;
+  timeoutReference: number | null = null;
+  obstacles: Obstacle[] = [];
+  player: Player;
+  score: Score;
 
-  constructor({
-    players,
-    width,
-    height,
-  }: {
-    players: Player[];
-    width: number;
-    height: number;
-  }) {
-    this.players = players;
-    this.obstacles = [];
+  constructor({ width, height }: { width: number; height: number }) {
     this.width = width;
     this.height = height;
-    this.level = 1;
+
+    clearTimeout(this.timeoutReference || undefined);
+    this.difficulty = 1;
+    this.obstacles = [];
+    this.player = new Player({ name: "Marvin", id: uuidv4() });
+    this.score = new Score({
+      position: new Point({ x: this.width - 100, y: 45 }),
+    });
   }
 
-  startLevel(level: number) {
-    this.level = level;
-    this.addObstacle();
+  build() {
+    this.reset();
+    this.startObstacleSpawnTimout();
   }
 
-  update(delta: number) {
+  update({ delta, duration }: { delta: number; duration: number }) {
+    if (!this.player || !this.score) throw new Error("Player or score is null");
+
+    const difficulty = Math.max(Math.floor(duration / 10000), 1);
+    this.difficulty = difficulty;
+
+    this.score.update(Math.floor(duration / 10));
+
     this.obstacles.forEach((obstacle) => {
-      obstacle.update(delta);
+      obstacle.update({
+        delta,
+        sceneWidth: this.width,
+        sceneHeight: this.height,
+      });
     });
 
     this.obstacles = this.obstacles.filter(
-      (obstacle) => !isObstacleOutOfView(obstacle, this)
+      (obstacle) =>
+        !(
+          obstacle.isOutsideScene({
+            sceneWidth: this.width,
+            sceneHeight: this.height,
+          }) && obstacle.wasInsideScene
+        )
     );
   }
 
-  addObstacle() {
-    setTimeout(() => {
-      this.obstacles.push(
-        new Obstacle({
-          id: uuidv4(),
-          motionSpeed: 0.22,
-          motionDirection: new Vector({ x: 1, y: 1 }),
-          rotationSpeed: 0.05,
-          rotationDirection: "clockwise",
-          backgroundColor: "red",
-          shapeKind: "rectangle",
-          width: 100,
-          height: 100,
-          startPosition: new Point({ x: 0, y: 0 }),
-        })
-      );
-      this.addObstacle();
-    }, 1000);
+  reset() {
+    clearTimeout(this.timeoutReference || undefined);
+    this.difficulty = 1;
+    this.obstacles = [];
+    this.player = new Player({ name: "Marvin", id: uuidv4() });
+    this.score = new Score({
+      position: new Point({ x: this.width - 124, y: 56 }),
+    });
   }
-}
 
-function isObstacleOutOfView(obstacle: Obstacle, scene: Scene) {
-  const { x, y } = obstacle.shape.center;
-  return (
-    x + obstacle.shape.width / 2 < 0 ||
-    x - obstacle.shape.width / 2 > scene.width ||
-    y + obstacle.shape.height / 2 < 0 ||
-    y - obstacle.shape.height / 2 > scene.height
-  );
+  private startObstacleSpawnTimout() {
+    this.spawnObstacle();
+    this.timeoutReference = setTimeout(() => {
+      this.startObstacleSpawnTimout();
+    }, 3000 / this.difficulty);
+  }
+
+  private spawnObstacle() {
+    const width = getRandomNumberBetween(10, 25 * this.difficulty);
+    const height = getRandomNumberBetween(10, 25 * this.difficulty);
+    const pointOutsideScene = getRandomPointOutsideScene({
+      sceneHeight: this.height,
+      sceneWidth: this.width,
+      objectWidth: width,
+      objectHeight: height,
+    });
+    const pointInScene = getRandomPointInsideScene({
+      sceneHeight: this.height,
+      sceneWidth: this.width,
+    });
+    const vectorFromOutsideToInside = getVectorFromPointAToPointB({
+      pointA: pointOutsideScene,
+      pointB: pointInScene,
+    });
+
+    this.obstacles.push(
+      new Obstacle({
+        id: uuidv4(),
+        startPosition: pointOutsideScene,
+        motionSpeed: (getRandomNumberBetween(10, 15) * this.difficulty) / 150,
+        motionDirection: vectorFromOutsideToInside,
+        rotationSpeed:
+          (getRandomNumberBetween(10, 15) * this.difficulty) / 2500,
+        rotationDirection: getRandomBoolean()
+          ? "clockwise"
+          : "counterclockwise",
+        backgroundColor: getRandomColorFromPalett(),
+        shapeKind: "rectangle",
+        width,
+        height,
+      })
+    );
+  }
 }

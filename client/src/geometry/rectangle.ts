@@ -59,7 +59,7 @@ export class Rectangle {
     return this.width * this.height;
   }
 
-  isPointOnRectangle(point: Point) {
+  isPointInside(point: Point) {
     const areaAPD = getAreaOfTriangle(this.A, point, this.D);
     const areaDPC = getAreaOfTriangle(this.D, point, this.C);
     const areaCPB = getAreaOfTriangle(this.C, point, this.B);

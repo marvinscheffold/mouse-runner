@@ -1,6 +1,7 @@
 import { Rectangle } from "../geometry/rectangle";
 import { Vector } from "../geometry/vector";
 import { Point } from "../geometry/point";
+import { Player } from "./player";
 
 export class Obstacle {
   id: string;
@@ -11,6 +12,7 @@ export class Obstacle {
   shapeKind: "rectangle";
   shape: Rectangle;
   backgroundColor: string;
+  wasInsideScene: boolean;
 
   constructor({
     id,
@@ -48,9 +50,18 @@ export class Obstacle {
       height: height,
       rotation: 0,
     });
+    this.wasInsideScene = false;
   }
 
-  update(delta: number) {
+  update({
+    delta,
+    sceneWidth,
+    sceneHeight,
+  }: {
+    delta: number;
+    sceneWidth: number;
+    sceneHeight: number;
+  }) {
     const newShape = new Rectangle({
       center: new Point({
         x:
@@ -68,5 +79,44 @@ export class Obstacle {
           : this.shape.rotation - this.rotationSpeed * delta,
     });
     this.shape = newShape;
+    if (this.isInsideScene({ sceneWidth, sceneHeight })) {
+      this.wasInsideScene;
+    }
+  }
+
+  isInsideScene({
+    sceneWidth,
+    sceneHeight,
+  }: {
+    sceneWidth: number;
+    sceneHeight: number;
+  }) {
+    const { x, y } = this.shape.center;
+    return (
+      x - this.shape.width / 2 >= 0 &&
+      x + this.shape.width / 2 <= sceneWidth &&
+      y - this.shape.height / 2 >= 0 &&
+      y + this.shape.height / 2 <= sceneHeight
+    );
+  }
+
+  isOutsideScene({
+    sceneWidth,
+    sceneHeight,
+  }: {
+    sceneWidth: number;
+    sceneHeight: number;
+  }) {
+    const { x, y } = this.shape.center;
+    return (
+      x + this.shape.width / 2 < 0 ||
+      x - this.shape.width / 2 > sceneWidth ||
+      y + this.shape.height / 2 < 0 ||
+      y - this.shape.height / 2 > sceneHeight
+    );
+  }
+
+  isPlayerInside(player: Player) {
+    return this.shape.isPointInside(player.position);
   }
 }

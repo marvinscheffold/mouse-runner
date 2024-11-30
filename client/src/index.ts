@@ -3,6 +3,8 @@ import "./style.css";
 
 function index() {
   const game = new Game();
-  game.start();
+  document.addEventListener("mousedown", () => {
+    game.start();
+  });
 }
 index();

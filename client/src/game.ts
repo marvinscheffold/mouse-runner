@@ -6,8 +6,9 @@ export class Game {
   canvasContext: CanvasRenderingContext2D;
   renderer: Renderer;
   scene: Scene;
-  lastTime: number;
-  delta: number;
+  lastTime: number = 0;
+  isRunning: boolean = false;
+  startTimestamp: number = 0;
 
   constructor() {
     this.canvas = document.createElement("canvas");
@@ -21,29 +22,44 @@ export class Game {
     this.canvasContext = context;
     this.renderer = new Renderer({ canvasContext: this.canvasContext });
     this.scene = new Scene({
-      players: [],
       width: this.canvas.width,
       height: this.canvas.height,
     });
-    this.lastTime = 0;
-    this.delta = 0;
   }
 
   start() {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this.startTimestamp = new Date().getTime();
+    this.scene.build();
     window.requestAnimationFrame((time) => this.update(time));
-    this.scene.startLevel(1);
   }
 
   update(time: number) {
     if (this.lastTime === 0) this.lastTime = time;
-    this.delta = time - this.lastTime;
+    const delta = time - this.lastTime;
     this.lastTime = time;
 
-    this.scene.update(this.delta);
+    this.scene.update({
+      delta,
+      duration: new Date().getTime() - this.startTimestamp,
+    });
     this.renderer.renderScene(this.scene);
 
-    console.log(this.scene.obstacles.length);
+    if (
+      this.scene.obstacles.some((obstacle) =>
+        obstacle.isPlayerInside(this.scene.player)
+      )
+    ) {
+      this.end();
+      return;
+    }
 
     window.requestAnimationFrame((time) => this.update(time));
+  }
+
+  end() {
+    console.log("end");
+    this.isRunning = false;
   }
 }

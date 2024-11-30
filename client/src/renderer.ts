@@ -1,3 +1,4 @@
+import { Point } from "./geometry/point";
 import { Rectangle } from "./geometry/rectangle";
 import { Scene } from "./scene";
 
@@ -16,12 +17,30 @@ export class Renderer {
   }
   renderScene(scene: Scene) {
     this.clearScreen();
+    this.renderBackground();
+
     scene.obstacles.forEach((obstacle) => {
       this.renderRectangle({
         rectangle: obstacle.shape,
         backgroundColor: obstacle.backgroundColor,
       });
     });
+    this.renderText({
+      text: scene.score.toString(),
+      position: scene.score.position,
+      color: "white",
+      font: "32px Arial",
+    });
+  }
+
+  renderBackground() {
+    this.canvasContext.fillStyle = "#11171D";
+    this.canvasContext.fillRect(
+      0,
+      0,
+      this.canvasContext.canvas.width,
+      this.canvasContext.canvas.height
+    );
   }
 
   renderRectangle({
@@ -39,5 +58,21 @@ export class Renderer {
     this.canvasContext.fillStyle = backgroundColor;
     this.canvasContext.fill();
     this.canvasContext.closePath();
+  }
+
+  renderText({
+    text,
+    position,
+    color,
+    font,
+  }: {
+    text: string;
+    position: Point;
+    color: string;
+    font: string;
+  }) {
+    this.canvasContext.font = font;
+    this.canvasContext.fillStyle = color;
+    this.canvasContext.fillText(text, position.x, position.y);
   }
 }

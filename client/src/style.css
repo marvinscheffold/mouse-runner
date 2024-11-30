@@ -13,9 +13,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgb(24, 28, 36);
 }
 
 canvas {
-  background-color: rgb(235, 235, 235);
+  background-color: #11171d;
 }
