@@ -1,6 +1,9 @@
 import { Renderer } from "./renderer";
 import { Scene } from "./scene";
 
+export const CANVAS_WIDTH = 700;
+export const CANVAS_HEIGHT = 700;
+
 export class Game {
   canvas: HTMLCanvasElement;
   canvasContext: CanvasRenderingContext2D;
@@ -12,8 +15,8 @@ export class Game {
 
   constructor() {
     this.canvas = document.createElement("canvas");
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
+    this.canvas.width = CANVAS_WIDTH;
+    this.canvas.height = CANVAS_HEIGHT;
     document.body.appendChild(this.canvas);
     const context = this.canvas.getContext("2d");
     if (!context) {
@@ -30,6 +33,9 @@ export class Game {
   start() {
     if (this.isRunning) return;
     this.isRunning = true;
+    // Without this a retry starts with a delta covering the whole game over
+    // screen, which teleports the first obstacles across the scene.
+    this.lastTime = 0;
     this.startTimestamp = new Date().getTime();
     this.scene.build();
     window.requestAnimationFrame((time) => this.update(time));
@@ -46,11 +52,7 @@ export class Game {
     });
     this.renderer.renderScene(this.scene);
 
-    if (
-      this.scene.obstacles.some((obstacle) =>
-        obstacle.isPlayerInside(this.scene.player)
-      )
-    ) {
+    if (this.scene.isPlayerHit()) {
       this.end();
       return;
     }
@@ -59,7 +61,7 @@ export class Game {
   }
 
   end() {
-    console.log("end");
     this.isRunning = false;
+    this.scene.highScore.persist();
   }
 }

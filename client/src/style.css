@@ -13,8 +13,10 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: black;
 }
 
 canvas {
   background-color: #11171d;
+  cursor: none;
 }
