@@ -6,7 +6,7 @@ export type PowerUpKind = "booster" | "timeMachine";
 
 export const POWER_UP_KINDS: PowerUpKind[] = ["booster", "timeMachine"];
 export const POWER_UP_DURATION = 5000;
-export const POWER_UP_RADIUS = 18;
+export const POWER_UP_RADIUS = 26;
 export const SLOW_MOTION_TIME_SCALE = 0.35;
 
 export const POWER_UP_APPEARANCE: Record<

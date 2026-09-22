@@ -1,8 +1,4 @@
-import {
-  HUNTING_OBSTACLE_COLOR,
-  Obstacle,
-  ObstacleMotionKind,
-} from "./objects/obstacle";
+import { Obstacle, ObstacleMotionKind } from "./objects/obstacle";
 import { v4 as uuidv4 } from "uuid";
 import { Player } from "./objects/player";
 import { getRandomPointOutsideScene } from "./utils/getRandomPointOutsideScene";
@@ -22,34 +18,23 @@ import { lerp } from "./utils/lerp";
 // The difficulty progress runs from 0 at the start of a run to 1 in a long
 // run, every value below is interpolated between its easy and its hard end.
 const SPAWN_INTERVAL = { easy: 1500, hard: 280 };
-const OBSTACLE_SPEED = { easy: 0.1, hard: 0.42 };
-const OBSTACLE_MIN_SIZE = { easy: 12, hard: 20 };
-const OBSTACLE_MAX_SIZE = { easy: 34, hard: 95 };
+const OBSTACLE_SPEED = { easy: 0.143, hard: 0.6 };
+const OBSTACLE_MIN_SIZE = { easy: 17, hard: 29 };
+const OBSTACLE_MAX_SIZE = { easy: 49, hard: 136 };
 const OBSTACLE_ROTATION = { easy: 0.8, hard: 2.2 };
 const INITIAL_OBSTACLE_COUNT = 3;
-const OFF_SCENE_CLEANUP_MARGIN = 400;
+const OFF_SCENE_CLEANUP_MARGIN = 571;
 
-// Obstacle flavours unlock with the score and then slowly take over a larger
-// share of the spawns. Straight ones always stay the majority.
-const CURVED_OBSTACLE = {
-  unlockScore: 10000,
-  rampScore: 25000,
-  chance: { unlocked: 0.08, max: 0.22 },
-  speedFactor: { unlocked: 0.7, max: 0.88 },
-  amplitude: { min: 45, max: 105 },
-  // Long compared to the two or three seconds an obstacle needs to cross, so
-  // most of them draw a single arc through the scene rather than weaving up
-  // and down several times.
-  period: { min: 2500, max: 9000 },
-};
+// Hunters unlock with the score and then slowly take a larger share of the
+// spawns. Straight obstacles always stay the majority.
 const HUNTING_OBSTACLE = {
-  unlockScore: 20000,
+  unlockScore: 10000,
   rampScore: 30000,
   chance: { unlocked: 0.1, max: 0.25 },
   speedFactor: { unlocked: 0.55, max: 0.75 },
   // Weaker than the heading it is added to, so a hunter leans towards the
   // cursor hard without ever being able to turn around and follow it.
-  strength: { unlocked: 0.45, max: 0.6 },
+  strength: { unlocked: 0.55, max: 0.7 },
   // A big block that also chases is not something a player can dodge.
   sizeFactor: 0.7,
 };
@@ -66,19 +51,29 @@ export class Scene {
   player: Player;
   score: Score;
   highScore: HighScore;
+  canvas: HTMLCanvasElement;
 
-  constructor({ width, height }: { width: number; height: number }) {
+  constructor({
+    width,
+    height,
+    canvas,
+  }: {
+    width: number;
+    height: number;
+    canvas: HTMLCanvasElement;
+  }) {
     this.width = width;
     this.height = height;
+    this.canvas = canvas;
 
     clearTimeout(this.timeoutReference || undefined);
     this.difficultyProgress = 0;
     this.obstacles = [];
     this.powerUps = [];
     this.effects = new Effects();
-    this.player = new Player({ name: "Marvin", id: uuidv4() });
+    this.player = new Player({ name: "Marvin", id: uuidv4(), canvas });
     this.score = new Score({
-      position: new Point({ x: this.width - 100, y: 45 }),
+      position: new Point({ x: this.width - 143, y: 64 }),
     });
     // Survives a reset, it is the only state that outlives a single run.
     this.highScore = new HighScore();
@@ -171,9 +166,13 @@ export class Scene {
     this.obstacles = [];
     this.powerUps = [];
     this.effects = new Effects();
-    this.player = new Player({ name: "Marvin", id: uuidv4() });
+    this.player = new Player({
+      name: "Marvin",
+      id: uuidv4(),
+      canvas: this.canvas,
+    });
     this.score = new Score({
-      position: new Point({ x: this.width - 124, y: 56 }),
+      position: new Point({ x: this.width - 177, y: 80 }),
     });
     this.highScore.startRun();
   }
@@ -217,23 +216,14 @@ export class Scene {
   private getMotionKind(): ObstacleMotionKind {
     const huntingChance =
       this.getUnlockedValue(HUNTING_OBSTACLE, HUNTING_OBSTACLE.chance) ?? 0;
-    const curvedChance =
-      this.getUnlockedValue(CURVED_OBSTACLE, CURVED_OBSTACLE.chance) ?? 0;
 
-    const roll = Math.random();
-    if (roll < huntingChance) return "hunting";
-    if (roll < huntingChance + curvedChance) return "curved";
+    if (Math.random() < huntingChance) return "hunting";
     return "straight";
   }
 
-  // Straight obstacles are the fastest, then the curved ones, then the
-  // hunters, and each flavour speeds up over the course of a run.
+  // Straight obstacles are the fastest. Hunters are slower, and they speed up
+  // over the course of a run.
   private getMotionSpeedFactor(motionKind: ObstacleMotionKind) {
-    if (motionKind === "curved") {
-      return (
-        this.getUnlockedValue(CURVED_OBSTACLE, CURVED_OBSTACLE.speedFactor) ?? 1
-      );
-    }
     if (motionKind === "hunting") {
       return (
         this.getUnlockedValue(HUNTING_OBSTACLE, HUNTING_OBSTACLE.speedFactor) ??
@@ -277,18 +267,6 @@ export class Scene {
           100,
         motionDirection: vectorFromOutsideToInside,
         motionKind,
-        // The sign decides whether the arc bends to the left or to the right.
-        curveAmplitude:
-          ((getRandomBoolean() ? 1 : -1) *
-            getRandomNumberBetween(
-              CURVED_OBSTACLE.amplitude.min,
-              CURVED_OBSTACLE.amplitude.max
-            )) /
-          100,
-        curvePeriod: getRandomNumberBetween(
-          CURVED_OBSTACLE.period.min,
-          CURVED_OBSTACLE.period.max
-        ),
         huntStrength:
           this.getUnlockedValue(HUNTING_OBSTACLE, HUNTING_OBSTACLE.strength) ??
           0,
@@ -299,10 +277,7 @@ export class Scene {
         rotationDirection: getRandomBoolean()
           ? "clockwise"
           : "counterclockwise",
-        backgroundColor:
-          motionKind === "hunting"
-            ? HUNTING_OBSTACLE_COLOR
-            : getRandomColorFromPalett(),
+        backgroundColor: getRandomColorFromPalett(),
         shapeKind: "rectangle",
         width,
         height,
@@ -334,7 +309,7 @@ export class Scene {
         id: uuidv4(),
         kind,
         startPosition: pointOutsideScene,
-        motionSpeed: getRandomNumberBetween(6, 10) / 120,
+        motionSpeed: getRandomNumberBetween(6, 10) / 84,
         motionDirection: vectorFromOutsideToInside,
         radius: POWER_UP_RADIUS,
       })

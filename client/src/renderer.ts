@@ -6,31 +6,30 @@ import { POWER_UP_APPEARANCE, PowerUp } from "./objects/powerUp";
 import { Scene } from "./scene";
 import { withAlpha } from "./utils/withAlpha";
 
-const SCORE_FONT = "32px Arial";
+const SCORE_FONT = "46px Arial";
 
 export class Renderer {
   canvasContext: CanvasRenderingContext2D;
   constructor({ canvasContext }: { canvasContext: CanvasRenderingContext2D }) {
     this.canvasContext = canvasContext;
   }
-  clearScreen() {
-    this.canvasContext.clearRect(
-      0,
-      0,
-      this.canvasContext.canvas.width,
-      this.canvasContext.canvas.height
-    );
+  clearScreen({ width, height }: { width: number; height: number }) {
+    this.canvasContext.clearRect(0, 0, width, height);
   }
   renderScene(scene: Scene) {
-    this.clearScreen();
-    this.renderBackground();
+    this.clearScreen({ width: scene.width, height: scene.height });
+    this.renderBackground({ width: scene.width, height: scene.height });
 
     const phase = scene.effects.elapsed;
     const isBoosted = scene.effects.isActive("booster");
     const isTimeSlowed = scene.effects.isActive("timeMachine");
 
     if (isTimeSlowed) {
-      this.renderSlowMotionField(phase);
+      this.renderSlowMotionField({
+        phase,
+        width: scene.width,
+        height: scene.height,
+      });
     }
 
     scene.obstacles.forEach((obstacle) => {
@@ -42,7 +41,11 @@ export class Renderer {
     });
 
     if (isTimeSlowed) {
-      this.renderSlowMotionVignette(phase);
+      this.renderSlowMotionVignette({
+        phase,
+        width: scene.width,
+        height: scene.height,
+      });
     }
 
     if (isBoosted) {
@@ -81,46 +84,35 @@ export class Renderer {
       text: `${isNewRecord ? "NEW BEST" : "BEST"} ${scene.highScore.toString()}`,
       position: new Point({
         x: scene.score.position.x + scoreWidth,
-        y: scene.score.position.y + 22,
+        y: scene.score.position.y + 31,
       }),
       color: isNewRecord
         ? POWER_UP_APPEARANCE.booster.color
         : "rgba(255, 255, 255, 0.45)",
-      font: "bold 13px Arial",
+      font: "bold 19px Arial",
       align: "right",
     });
   }
 
-  renderBackground() {
+  renderBackground({ width, height }: { width: number; height: number }) {
     this.canvasContext.fillStyle = "#11171D";
-    this.canvasContext.fillRect(
-      0,
-      0,
-      this.canvasContext.canvas.width,
-      this.canvasContext.canvas.height
-    );
+    this.canvasContext.fillRect(0, 0, width, height);
   }
 
-  // The three motion kinds have to be tellable apart at a glance: a straight
-  // obstacle is a solid block, a weaving one is hollow, and a hunter glows.
+  // The two motion kinds have to be tellable apart at a glance: a straight
+  // obstacle is a solid block, and a hunter glows.
   renderObstacle({ obstacle, phase }: { obstacle: Obstacle; phase: number }) {
     this.canvasContext.save();
     this.traceRectanglePath(obstacle.shape);
 
-    if (obstacle.motionKind === "curved") {
-      this.canvasContext.fillStyle = withAlpha(obstacle.backgroundColor, 0.25);
-      this.canvasContext.fill();
-      this.canvasContext.lineWidth = 2.5;
-      this.canvasContext.strokeStyle = obstacle.backgroundColor;
-      this.canvasContext.stroke();
-    } else if (obstacle.motionKind === "hunting") {
+    if (obstacle.motionKind === "hunting") {
       this.canvasContext.shadowColor = obstacle.backgroundColor;
-      this.canvasContext.shadowBlur = 18 + 8 * Math.sin(phase / 160);
+      this.canvasContext.shadowBlur = 26 + 11 * Math.sin(phase / 160);
       this.canvasContext.fillStyle = obstacle.backgroundColor;
       this.canvasContext.fill();
       // The palette holds reds of its own, the bright edge is what separates a
       // hunter from an ordinary block that happens to be red.
-      this.canvasContext.lineWidth = 2;
+      this.canvasContext.lineWidth = 3;
       this.canvasContext.strokeStyle = "rgba(255, 255, 255, 0.85)";
       this.canvasContext.stroke();
     } else {
@@ -173,13 +165,13 @@ export class Renderer {
     this.canvasContext.save();
     if (glowColor) {
       this.canvasContext.shadowColor = glowColor;
-      this.canvasContext.shadowBlur = 18;
+      this.canvasContext.shadowBlur = 26;
     }
     this.canvasContext.beginPath();
     this.canvasContext.moveTo(position.x, position.y);
-    this.canvasContext.lineTo(position.x + 28, position.y + 15);
-    this.canvasContext.lineTo(position.x + 15, position.y + 17);
-    this.canvasContext.lineTo(position.x + 10, position.y + 30);
+    this.canvasContext.lineTo(position.x + 40, position.y + 21);
+    this.canvasContext.lineTo(position.x + 21, position.y + 24);
+    this.canvasContext.lineTo(position.x + 14, position.y + 43);
     this.canvasContext.fillStyle = backgroundColor;
     this.canvasContext.fill();
     this.canvasContext.closePath();
@@ -210,10 +202,10 @@ export class Renderer {
     this.canvasContext.fill();
 
     this.canvasContext.beginPath();
-    this.canvasContext.arc(x, y, radius + 7, 0, Math.PI * 2);
-    this.canvasContext.setLineDash([4, 8]);
+    this.canvasContext.arc(x, y, radius + 10, 0, Math.PI * 2);
+    this.canvasContext.setLineDash([6, 11]);
     this.canvasContext.lineDashOffset = -phase / 40;
-    this.canvasContext.lineWidth = 2;
+    this.canvasContext.lineWidth = 3;
     this.canvasContext.strokeStyle = withAlpha(color, 0.7);
     this.canvasContext.stroke();
     this.canvasContext.setLineDash([]);
@@ -222,7 +214,7 @@ export class Renderer {
     this.canvasContext.arc(x, y, radius, 0, Math.PI * 2);
     this.canvasContext.fillStyle = "#11171D";
     this.canvasContext.fill();
-    this.canvasContext.lineWidth = 3;
+    this.canvasContext.lineWidth = 4;
     this.canvasContext.strokeStyle = color;
     this.canvasContext.stroke();
 
@@ -239,44 +231,44 @@ export class Renderer {
     const { color } = POWER_UP_APPEARANCE.booster;
     // The cursor is drawn from its tip towards the bottom right, so the aura is
     // centered on the body of the arrow instead of on the tip.
-    const x = position.x + 10;
-    const y = position.y + 12;
+    const x = position.x + 14;
+    const y = position.y + 17;
     const pulse = Math.sin(phase / 220);
 
     this.canvasContext.save();
 
-    const glow = this.canvasContext.createRadialGradient(x, y, 4, x, y, 54);
+    const glow = this.canvasContext.createRadialGradient(x, y, 6, x, y, 77);
     glow.addColorStop(0, withAlpha(color, 0.45));
     glow.addColorStop(0.55, withAlpha(color, 0.16));
     glow.addColorStop(1, withAlpha(color, 0));
     this.canvasContext.beginPath();
-    this.canvasContext.arc(x, y, 54, 0, Math.PI * 2);
+    this.canvasContext.arc(x, y, 77, 0, Math.PI * 2);
     this.canvasContext.fillStyle = glow;
     this.canvasContext.fill();
 
     this.canvasContext.beginPath();
-    this.canvasContext.arc(x, y, 30 + 4 * pulse, 0, Math.PI * 2);
-    this.canvasContext.lineWidth = 2;
+    this.canvasContext.arc(x, y, 43 + 6 * pulse, 0, Math.PI * 2);
+    this.canvasContext.lineWidth = 3;
     this.canvasContext.strokeStyle = withAlpha(color, 0.8);
     this.canvasContext.stroke();
 
     this.canvasContext.beginPath();
-    this.canvasContext.arc(x, y, 42, 0, Math.PI * 2);
-    this.canvasContext.setLineDash([6, 10]);
+    this.canvasContext.arc(x, y, 60, 0, Math.PI * 2);
+    this.canvasContext.setLineDash([9, 14]);
     this.canvasContext.lineDashOffset = -phase / 26;
-    this.canvasContext.lineWidth = 2;
+    this.canvasContext.lineWidth = 3;
     this.canvasContext.strokeStyle = withAlpha(color, 0.55);
     this.canvasContext.stroke();
     this.canvasContext.setLineDash([]);
 
     for (let spark = 0; spark < 6; spark++) {
       const angle = phase / 420 + (spark * Math.PI) / 3;
-      const distance = 46 + 3 * pulse;
+      const distance = 66 + 4 * pulse;
       this.canvasContext.beginPath();
       this.canvasContext.arc(
         x + Math.cos(angle) * distance,
         y + Math.sin(angle) * distance,
-        2.5,
+        3.6,
         0,
         Math.PI * 2
       );
@@ -287,8 +279,15 @@ export class Renderer {
     this.canvasContext.restore();
   }
 
-  renderSlowMotionField(phase: number) {
-    const { width, height } = this.canvasContext.canvas;
+  renderSlowMotionField({
+    phase,
+    width,
+    height,
+  }: {
+    phase: number;
+    width: number;
+    height: number;
+  }) {
     const { color } = POWER_UP_APPEARANCE.timeMachine;
 
     this.canvasContext.save();
@@ -306,15 +305,22 @@ export class Renderer {
         0,
         Math.PI * 2
       );
-      this.canvasContext.lineWidth = 2;
+      this.canvasContext.lineWidth = 3;
       this.canvasContext.strokeStyle = withAlpha(color, 0.18 * (1 - progress));
       this.canvasContext.stroke();
     }
     this.canvasContext.restore();
   }
 
-  renderSlowMotionVignette(phase: number) {
-    const { width, height } = this.canvasContext.canvas;
+  renderSlowMotionVignette({
+    phase,
+    width,
+    height,
+  }: {
+    phase: number;
+    width: number;
+    height: number;
+  }) {
     const { color } = POWER_UP_APPEARANCE.timeMachine;
     const intensity = 0.28 + 0.06 * Math.sin(phase / 300);
 
@@ -336,13 +342,13 @@ export class Renderer {
   }
 
   renderEffectsHud({ effects }: { effects: Effects }) {
-    const panelWidth = 190;
-    const panelHeight = 34;
+    const panelWidth = 271;
+    const panelHeight = 49;
 
     effects.getActiveKinds().forEach((kind, index) => {
       const { color, label } = POWER_UP_APPEARANCE[kind];
-      const x = 24;
-      const y = 24 + index * (panelHeight + 10);
+      const x = 34;
+      const y = 34 + index * (panelHeight + 14);
 
       this.canvasContext.save();
 
@@ -351,42 +357,42 @@ export class Renderer {
         y,
         width: panelWidth,
         height: panelHeight,
-        radius: 8,
+        radius: 11,
       });
       this.canvasContext.fillStyle = "rgba(17, 23, 29, 0.75)";
       this.canvasContext.fill();
-      this.canvasContext.lineWidth = 1.5;
+      this.canvasContext.lineWidth = 2.1;
       this.canvasContext.strokeStyle = withAlpha(color, 0.55);
       this.canvasContext.stroke();
 
       if (kind === "booster") {
-        this.renderBoltIcon({ x: x + 20, y: y + panelHeight / 2, size: 9, color });
+        this.renderBoltIcon({ x: x + 29, y: y + panelHeight / 2, size: 13, color });
       } else {
         this.renderClockIcon({
-          x: x + 20,
+          x: x + 29,
           y: y + panelHeight / 2,
-          size: 9,
+          size: 13,
           color,
           phase: effects.elapsed,
         });
       }
 
-      this.canvasContext.font = "bold 10px Arial";
+      this.canvasContext.font = "bold 14px Arial";
       this.canvasContext.fillStyle = color;
-      this.canvasContext.fillText(label, x + 38, y + 15);
+      this.canvasContext.fillText(label, x + 54, y + 21);
 
       this.canvasContext.textAlign = "right";
       this.canvasContext.fillText(
         `${(effects.getRemaining(kind) / 1000).toFixed(1)}s`,
-        x + panelWidth - 12,
-        y + 15
+        x + panelWidth - 17,
+        y + 21
       );
       this.canvasContext.textAlign = "left";
 
-      const barX = x + 38;
-      const barY = y + 21;
-      const barWidth = panelWidth - 38 - 12;
-      const barHeight = 5;
+      const barX = x + 54;
+      const barY = y + 30;
+      const barWidth = panelWidth - 54 - 17;
+      const barHeight = 7;
       this.canvasContext.fillStyle = withAlpha(color, 0.2);
       this.canvasContext.fillRect(barX, barY, barWidth, barHeight);
       this.canvasContext.fillStyle = color;
@@ -451,7 +457,7 @@ export class Renderer {
   }) {
     this.canvasContext.beginPath();
     this.canvasContext.arc(x, y, size * 0.75, 0, Math.PI * 2);
-    this.canvasContext.lineWidth = Math.max(1.5, size * 0.16);
+    this.canvasContext.lineWidth = Math.max(2.1, size * 0.16);
     this.canvasContext.strokeStyle = color;
     this.canvasContext.stroke();
 
@@ -466,7 +472,7 @@ export class Renderer {
         x + Math.cos(angle - Math.PI / 2) * length,
         y + Math.sin(angle - Math.PI / 2) * length
       );
-      this.canvasContext.lineWidth = Math.max(1.5, size * 0.14);
+      this.canvasContext.lineWidth = Math.max(2.1, size * 0.14);
       this.canvasContext.strokeStyle = color;
       this.canvasContext.stroke();
     });

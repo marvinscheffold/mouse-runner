@@ -1,8 +1,8 @@
 import { Renderer } from "./renderer";
 import { Scene } from "./scene";
 
-export const CANVAS_WIDTH = 700;
-export const CANVAS_HEIGHT = 700;
+export const CANVAS_WIDTH = 1000;
+export const CANVAS_HEIGHT = 1000;
 
 export class Game {
   canvas: HTMLCanvasElement;
@@ -23,11 +23,25 @@ export class Game {
       throw new Error("Canvas context is null");
     }
     this.canvasContext = context;
+    this.fitCanvas();
+    window.addEventListener("resize", () => this.fitCanvas());
     this.renderer = new Renderer({ canvasContext: this.canvasContext });
     this.scene = new Scene({
-      width: this.canvas.width,
-      height: this.canvas.height,
+      width: CANVAS_WIDTH,
+      height: CANVAS_HEIGHT,
+      canvas: this.canvas,
     });
+  }
+
+  fitCanvas() {
+    const displaySize = Math.min(window.innerWidth, window.innerHeight);
+    const pixelRatio = window.devicePixelRatio || 1;
+    this.canvas.style.width = `${displaySize}px`;
+    this.canvas.style.height = `${displaySize}px`;
+    this.canvas.width = Math.round(displaySize * pixelRatio);
+    this.canvas.height = Math.round(displaySize * pixelRatio);
+    const scale = this.canvas.width / CANVAS_WIDTH;
+    this.canvasContext.setTransform(scale, 0, 0, scale, 0, 0);
   }
 
   start() {

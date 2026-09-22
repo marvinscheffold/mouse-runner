@@ -1,4 +1,4 @@
-const HIGH_SCORE_STORAGE_KEY = "mouse-runner.high-score";
+const HIGH_SCORE_STORAGE_KEY = "mouse-runner.high-score.v2";
 
 export class HighScore {
   value: number;
