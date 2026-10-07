@@ -5,24 +5,33 @@ export class Player {
   id: string;
   name: string;
   position: Point;
+  isMovementLocked: boolean = false;
   constructor({
     name,
     id,
     canvas,
+    position,
   }: {
     name: string;
     id: string;
     canvas: HTMLCanvasElement;
+    position?: Point;
   }) {
     this.id = id;
     this.name = name;
-    this.position = new Point({ x: 0, y: 0 });
+    this.position = position ?? new Point({ x: 0, y: 0 });
     document.addEventListener("mousemove", (event) => {
+      if (this.isMovementLocked) return;
       this.position = getScenePosition({ event, canvas });
     });
     document.addEventListener("mousedown", (event) => {
+      if (this.isMovementLocked) return;
       this.position = getScenePosition({ event, canvas });
     });
+  }
+
+  lockMovement() {
+    this.isMovementLocked = true;
   }
 }
 

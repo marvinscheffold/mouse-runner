@@ -11,6 +11,8 @@ export class Game {
   scene: Scene;
   lastTime: number = 0;
   isRunning: boolean = false;
+  isDead: boolean = false;
+  isPointerOverCanvas: boolean = false;
   startTimestamp: number = 0;
 
   constructor() {
@@ -23,14 +25,33 @@ export class Game {
       throw new Error("Canvas context is null");
     }
     this.canvasContext = context;
-    this.fitCanvas();
-    window.addEventListener("resize", () => this.fitCanvas());
     this.renderer = new Renderer({ canvasContext: this.canvasContext });
     this.scene = new Scene({
       width: CANVAS_WIDTH,
       height: CANVAS_HEIGHT,
       canvas: this.canvas,
     });
+    this.canvas.addEventListener("mouseenter", () => {
+      this.isPointerOverCanvas = true;
+      if (!this.isIdle()) return;
+      this.renderIdle();
+    });
+    this.canvas.addEventListener("mouseleave", () => {
+      this.isPointerOverCanvas = false;
+      if (!this.isIdle()) return;
+      this.renderIdle();
+    });
+    // Registered after the player, so the cursor position is already updated.
+    document.addEventListener("mousemove", () => {
+      if (!this.isIdle()) return;
+      this.renderIdle();
+    });
+    this.fitCanvas();
+    window.addEventListener("resize", () => this.fitCanvas());
+  }
+
+  isIdle() {
+    return !this.isRunning && !this.isDead;
   }
 
   fitCanvas() {
@@ -42,11 +63,18 @@ export class Game {
     this.canvas.height = Math.round(displaySize * pixelRatio);
     const scale = this.canvas.width / CANVAS_WIDTH;
     this.canvasContext.setTransform(scale, 0, 0, scale, 0, 0);
+    if (this.isRunning) return;
+    if (this.isDead) {
+      this.renderDeath();
+      return;
+    }
+    this.renderIdle();
   }
 
   start() {
     if (this.isRunning) return;
     this.isRunning = true;
+    this.isDead = false;
     // Without this a retry starts with a delta covering the whole game over
     // screen, which teleports the first obstacles across the scene.
     this.lastTime = 0;
@@ -76,6 +104,40 @@ export class Game {
 
   end() {
     this.isRunning = false;
+    this.isDead = true;
+    this.scene.player.lockMovement();
     this.scene.highScore.persist();
+    this.renderDeath();
+  }
+
+  renderIdle() {
+    this.renderer.clearScreen({
+      width: this.scene.width,
+      height: this.scene.height,
+    });
+    this.renderer.renderBackground({
+      width: this.scene.width,
+      height: this.scene.height,
+    });
+    if (this.isPointerOverCanvas) {
+      this.renderer.renderMouse({
+        position: this.scene.player.position,
+        backgroundColor: "white",
+      });
+    }
+    this.renderer.renderPrompt({
+      text: "Click to play",
+      width: this.scene.width,
+      height: this.scene.height,
+    });
+  }
+
+  renderDeath() {
+    this.renderer.renderScene(this.scene);
+    this.renderer.renderPrompt({
+      text: "Click to play again",
+      width: this.scene.width,
+      height: this.scene.height,
+    });
   }
 }

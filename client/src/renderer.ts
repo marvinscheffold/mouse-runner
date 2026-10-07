@@ -7,6 +7,7 @@ import { Scene } from "./scene";
 import { withAlpha } from "./utils/withAlpha";
 
 const SCORE_FONT = "46px Arial";
+const PROMPT_FONT = "bold 54px Arial";
 
 export class Renderer {
   canvasContext: CanvasRenderingContext2D;
@@ -150,6 +151,26 @@ export class Renderer {
     this.canvasContext.fillStyle = color;
     this.canvasContext.textAlign = align ?? "left";
     this.canvasContext.fillText(text, position.x, position.y);
+    this.canvasContext.restore();
+  }
+
+  renderPrompt({
+    text,
+    width,
+    height,
+  }: {
+    text: string;
+    width: number;
+    height: number;
+  }) {
+    this.canvasContext.save();
+    this.canvasContext.font = PROMPT_FONT;
+    this.canvasContext.fillStyle = "white";
+    this.canvasContext.textAlign = "center";
+    this.canvasContext.textBaseline = "middle";
+    this.canvasContext.shadowColor = "rgba(0, 0, 0, 0.65)";
+    this.canvasContext.shadowBlur = 12;
+    this.canvasContext.fillText(text, width / 2, height / 2);
     this.canvasContext.restore();
   }
 

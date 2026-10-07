@@ -165,11 +165,16 @@ export class Scene {
     this.difficultyProgress = 0;
     this.obstacles = [];
     this.powerUps = [];
+    const position = new Point({
+      x: this.player.position.x,
+      y: this.player.position.y,
+    });
     this.effects = new Effects();
     this.player = new Player({
       name: "Marvin",
       id: uuidv4(),
       canvas: this.canvas,
+      position,
     });
     this.score = new Score({
       position: new Point({ x: this.width - 177, y: 80 }),
